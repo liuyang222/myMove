@@ -1,4 +1,4 @@
-package myFilm;
+package myMove;
 
 /**
  * Hello world!

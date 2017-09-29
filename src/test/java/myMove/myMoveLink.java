@@ -11,7 +11,7 @@ import us.codecraft.webmagic.processor.PageProcessor;
 /**
  * 
  * @author 人淡如菊
- * QQ:476273837  备注：18201059157
+ * QQ:476273837
  * time:2017/09/27
  *
  */
@@ -122,6 +122,7 @@ public class myMoveLink implements PageProcessor {
 				moveInfo.setMoveName(moveName);
 				moveInfo.setMoveLink(moveLink);
 				moveInfo.setMoveScore(moveScore);
+				//把过滤后的信息存放数据库
 				MoveSave.moveSave(moveInfo);
 			}
 			

@@ -26,6 +26,8 @@ public class myMoveLink implements PageProcessor {
 	private String moveLink;//电影下载链接
 	private String moveScore;//电影评分
 	private int tenXY;//评分的位置索引（IMDB评分 7.0/10 from 11,392 users）
+	private int tenXY1;//
+	private int tenXY2;//评分的特殊情况，IMDb评分 4.7/101 79 User
 	private Long Score;//截取评分的第一位数字进行判断,如果>8就存放数据库
 	MoveSave moveSave=new MoveSave();
 	private Site site = Site
@@ -43,6 +45,7 @@ public class myMoveLink implements PageProcessor {
 			pageXY=page.getHtml().xpath("//*[@id='header']/div/div[3]/div[3]/div[2]/div[2]/div[2]/div").toString().indexOf("页");
 			//截取共和页之间的数据，共是固定位置索引位置是18
 			total=Integer.parseInt(page.getHtml().xpath("//*[@id='header']/div/div[3]/div[3]/div[2]/div[2]/div[2]/div").toString().substring(18, pageXY));
+			moveSave.sqlDelete();
 			first=1;//获取总页数后，标志位修改为1
 		}
 		
@@ -67,26 +70,30 @@ public class myMoveLink implements PageProcessor {
 				
 			}
 		}else{
-										
-			//获取包含电影名称的文本			
+										  
+			//获取包含电影名称的文本	
 			moveName=page.getHtml().xpath("//*[@id='header']/div/div[3]/div[3]/div[2]/div[2]/div[1]/h1/font").toString();
+			//System.out.println("截取前的电影名称"+moveName);
 			//从moveName中获取《xxxxxx》这部分的电影名称
 			int startXY=moveName.indexOf("《");
-			int endXy=moveName.indexOf("》");			
-			moveName=moveName.substring(startXY, endXy+1);
+			int endXY=moveName.indexOf("》");		
+			System.out.println("坐标X"+startXY);
+			System.out.println("坐标y"+endXY);
+			moveName=moveName.substring(startXY, endXY+1);
 			System.out.println("截取后的电影名称"+moveName);
 			
 			//获取包含电影下载地址的文本   
 			moveLink=page.getHtml().xpath("//*[@id='Zoom']/span/*/tbody/tr/td/a/text()").toString();
-			System.out.println("截取后的电影连接是"+moveLink);
+			System.out.println("电影连接是"+moveLink);
 			
 			/*
 			*含有评分的字段文本有两种格式
 			*IMDB评分 7.8/10  2,861 votes
 			*IMDb评分  5.4/10 from 1,491 users
-			*
+			*//*[@id="Zoom"]/span/p[1]/text()[8]
 			*/
 			String moveScoreText=page.getHtml().xpath("//*[@id='Zoom']/span").toString();
+			String moveScoreText1=page.getHtml().xpath("//*[@id='Zoom']/span/p[1]/text()").toString();
 			//IMDb位置索引
 			int IMDbXY=moveScoreText.indexOf("IMDb");
 			int IMDBXY=moveScoreText.indexOf("IMDB");
@@ -100,16 +107,27 @@ public class myMoveLink implements PageProcessor {
 			}else{
 				//获取该文本的位置,以便于获取评分
 				tenXY=moveScoreText.indexOf("/10 from");
+				tenXY1=moveScoreText.indexOf("/10from");
+				tenXY2=moveScoreText.indexOf("/10");
+				
 				//如果查找到该text,就获取评分
 				if(tenXY!=-1){
 					
 					moveScore=moveScoreText.substring(tenXY-3, tenXY).trim();
 					System.out.println("评分文本"+moveScore);
-				}else{
-					//否则查找另一种text,获取评分
-					tenXY=moveScoreText.indexOf("/10 ");
-					moveScore=moveScoreText.substring(tenXY-3, tenXY).trim();
+				}else if(tenXY1!=-1){
+					
+					moveScore=moveScoreText.substring(tenXY1-2, tenXY).trim();
 					System.out.println("评分文本"+moveScore);
+				}else if(tenXY2!=-1){
+					
+					moveScore=moveScoreText.substring(tenXY2-1, tenXY2).trim();
+					System.out.println("评分文本"+moveScore);
+				}else{
+					
+					tenXY2=moveScoreText1.indexOf("User");
+					moveScore=moveScoreText1.substring(tenXY2-5,tenXY2);
+					System.out.println("顾哈哈++++++++++++"+moveScore);
 				}
 				//转换评分为Long类型
 				Score=Long.parseLong(moveScore.substring(0, 1));
@@ -123,7 +141,7 @@ public class myMoveLink implements PageProcessor {
 				moveInfo.setMoveLink(moveLink);
 				moveInfo.setMoveScore(moveScore);
 				//把过滤后的信息存放数据库
-				MoveSave.moveSave(moveInfo);
+				moveSave.moveSave(moveInfo);
 			}
 			
 		}
